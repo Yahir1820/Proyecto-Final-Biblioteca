@@ -1,6 +1,16 @@
 package Servicios;
 
+/**
+ * Esta es una clase de apoyo que se encarga de dar formato a los comprobantes textuales de préstamo y devolución.
+ */
+// DEPENDENCIA: Utiliza objetos de tipo Prestamo únicamente como parámetros de método sin almacenarlos como atributos.
 public class GeneradorComprobante {
+    /**
+     * Genera el comprobante impreso (o en consola) al momento de autorizar un préstamo (RF-10).
+     *
+     * @param prestamo Transacción de préstamo recién registrada.
+     * @return Cadena estructurada con el resumen del folio, fechas, lector y materiales.
+     */
     public String generarTicketPrestamo(Prestamo prestamo) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("====================================================\n");
@@ -20,6 +30,13 @@ public class GeneradorComprobante {
         return stringBuilder.toString();
     }
 
+    /**
+     * Genera el comprobante de recepción al procesar la devolución de un préstamo (RF-10).
+     *
+     * @param prestamo Préstamo que acaba de ser devuelto.
+     * @param multaTotal Monto de sanción calculado al momento de la entrega.
+     * @return Cadena estructurada con el detalle de la entrega y el estado de multa.
+     */
     public String generarTicketDevolucion(Prestamo prestamo, double multaTotal) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("====================================================\n");

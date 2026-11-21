@@ -2,17 +2,36 @@ package Servicios;
 
 import Materiales.MaterialBibliografico;
 
+/**
+ * Representa una línea de detalle dentro de un préstamo bibliotecario.
+ * Forma parte de una relación de composición con la clase "Prestamo".
+ */
 public class DetallePrestamo {
     protected MaterialBibliografico material;
     protected int cantidad;
     protected double subtotalMulta;
 
+    /**
+     * Construye un detalle de préstamo asociando un material y la cantidad de ejemplares.
+     *
+     * @param material Material bibliográfico solicitado.
+     * @param cantidad Cantidad de ejemplares de este material.
+     */
     public DetallePrestamo(MaterialBibliografico material, int cantidad) {
         this.material = material;
         this.cantidad = cantidad;
         this.subtotalMulta = 0.0;
     }
 
+    /**
+     * Calcula la multa correspondiente a este ítem invocando polimórficamente
+     * la tarifa diaria definida por cada subclase de MaterialBibliografico (RN-05).
+     *
+     * @param diasRetraso Días naturales de atraso en la devolución.
+     * @return Monto total de multa para este detalle.
+     */
+    // POLIMORFISMO: Se llama a calcularMulta() sobre la referencia base "MaterialBibliografico",
+    // ejecutando la tarifa específica de Libro ($10), Tesis ($15) o Revista ($5) en tiempo de ejecución.
     public double calcularMultaItem(int diasRetraso) {
         if (diasRetraso <= 0) {
             this.subtotalMulta = 0.0;
