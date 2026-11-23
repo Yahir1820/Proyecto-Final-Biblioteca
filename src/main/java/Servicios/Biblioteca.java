@@ -1,5 +1,6 @@
 package Servicios;
 
+import Excepciones.BibliotecaException;
 import Materiales.MaterialBibliografico;
 import Usuarios.Lector;
 import Usuarios.Usuario;
@@ -354,7 +355,7 @@ public class Biblioteca {
      * @param fechaEntrega Fecha real en que se entregan los materiales.
      * @return Monto de multa generada (0.0 si no hubo retraso).
      */
-    public double procesarDevolucion(String folio, LocalDate fechaEntrega) {
+    public double procesarDevolucion(String folio, LocalDate fechaEntrega) throws BibliotecaException {
         Prestamo prestamo = buscarPrestamoPorFolio(folio);
         return prestamo.registrarDevolucion(fechaEntrega);
     }
