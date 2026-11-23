@@ -1,5 +1,7 @@
 package Materiales;
 
+import Excepciones.BibliotecaException;
+
 /**
  * Representa un trabajo de titulación o investigación académica resguardado en la biblioteca.
  */
@@ -24,9 +26,9 @@ public class Tesis extends MaterialBibliografico {
      * @param institucion           Universidad o facultad de procedencia.
      */
     public Tesis(String idMaterial, String titulo, String autor, int anioPublicacion,
-                 int ejemplaresDisponibles, GradoAcademico gradoAcademico, String institucion) {
+                 int ejemplaresDisponibles, GradoAcademico gradoAcademico, String institucion) throws BibliotecaException {
         super(idMaterial, titulo, autor, anioPublicacion, ejemplaresDisponibles);
-        this.gradoAcademico = gradoAcademico;
+        setGradoAcademico(gradoAcademico);
         this.institucion = institucion;
     }
 
@@ -56,7 +58,10 @@ public class Tesis extends MaterialBibliografico {
         return gradoAcademico;
     }
 
-    public void setGradoAcademico(GradoAcademico gradoAcademico) {
+    public void setGradoAcademico(GradoAcademico gradoAcademico) throws BibliotecaException {
+        if (gradoAcademico == null) {
+            throw new BibliotecaException("El grado académico no puede ser nulo.");
+        }
         this.gradoAcademico = gradoAcademico;
     }
 

@@ -1,5 +1,7 @@
 package Materiales;
 
+import Excepciones.BibliotecaException;
+
 /**
  * Representa una publicación periódica o revista científica del acervo.
  */
@@ -24,10 +26,10 @@ public class Revista extends MaterialBibliografico {
      * @param numeroEdicion         Número o volumen de la edición.
      */
     public Revista(String idMaterial, String titulo, String autor, int anioPublicacion,
-                   int ejemplaresDisponibles, String issn, int numeroEdicion) {
+                   int ejemplaresDisponibles, String issn, int numeroEdicion) throws BibliotecaException {
         super(idMaterial, titulo, autor, anioPublicacion, ejemplaresDisponibles);
         this.issn = issn;
-        this.numeroEdicion = numeroEdicion;
+        setNumeroEdicion(numeroEdicion);
     }
 
     @Override
@@ -64,7 +66,10 @@ public class Revista extends MaterialBibliografico {
         return numeroEdicion;
     }
 
-    public void setNumeroEdicion(int numeroEdicion) {
+    public void setNumeroEdicion(int numeroEdicion) throws BibliotecaException {
+        if (numeroEdicion <= 0) {
+            throw new BibliotecaException("El número de edición debe ser mayor a cero.");
+        }
         this.numeroEdicion = numeroEdicion;
     }
 }

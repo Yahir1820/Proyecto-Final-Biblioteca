@@ -1,5 +1,7 @@
 package Materiales;
 
+import Excepciones.BibliotecaException;
+
 /**
  * Representa un libro de circulación general disponible para préstamo a domicilio.
  */
@@ -24,10 +26,10 @@ public class Libro extends MaterialBibliografico {
      * @param numeroPaginas         Extensión total en páginas.
      */
     public Libro(String idMaterial, String titulo, String autor, int anioPublicacion,
-                 int ejemplaresDisponibles, String isbn, int numeroPaginas) {
+                 int ejemplaresDisponibles, String isbn, int numeroPaginas) throws BibliotecaException {
         super(idMaterial, titulo, autor, anioPublicacion, ejemplaresDisponibles);
         this.isbn = isbn;
-        this.numeroPaginas = numeroPaginas;
+        setNumeroPaginas(numeroPaginas);
     }
 
     // SOBREESCRITURA (@Override): Implementación específica de las reglas de préstamo y multa para libros.
@@ -49,7 +51,7 @@ public class Libro extends MaterialBibliografico {
     @Override
     public String mostrarFicha() {
         String estado = activo ? "Activo" : "Inactivo";
-        return String.format("[Libro] ID: %s | Título: %s | Autor: %s (%d) | ISBN: %s | Págs: %d | Disponibles: %d | Estado: %s",
+        return String.format("[Libro] ID: %s | Título: %s | Autor: %s (%d) | ISBN: %s | Páginas: %d | Disponibles: %d | Estado: %s",
                 idMaterial, titulo, autor, anioPublicacion, isbn, numeroPaginas, ejemplaresDisponibles, estado);
     }
 
@@ -65,7 +67,10 @@ public class Libro extends MaterialBibliografico {
         return numeroPaginas;
     }
 
-    public void setNumeroPaginas(int numeroPaginas) {
+    public void setNumeroPaginas(int numeroPaginas) throws BibliotecaException {
+        if (numeroPaginas <= 0) {
+            throw new BibliotecaException("El número de páginas debe ser mayor a cero.");
+        }
         this.numeroPaginas = numeroPaginas;
     }
 }
