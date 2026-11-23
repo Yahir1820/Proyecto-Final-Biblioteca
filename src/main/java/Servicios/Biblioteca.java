@@ -1,6 +1,14 @@
 package Servicios;
 
+import Excepciones.BibliotecaException;
+import Excepciones.EntidadNoEncontradaException;
+import Excepciones.OperacionInvalidaBajaException;
+import Excepciones.RegistroDuplicadoException;
+import Excepciones.UsuarioNoElegibleException;
+import Excepciones.BibliotecaException;
+
 import Materiales.MaterialBibliografico;
+
 import Usuarios.Lector;
 import Usuarios.Usuario;
 
@@ -43,20 +51,19 @@ public class Biblioteca {
      * RF-01 (Alta): Registra un nuevo material en el catálogo verificando que su ID no exista.
      *
      * @param material Subclase concreta de MaterialBibliografico.
+     * @throws RegistroDuplicadoException Si ya existe un material con el mismo ID.
+     * @throws BibliotecaException Si el material es nulo o sus ejemplares no son válidos.
      */
-    public void registrarMaterial(MaterialBibliografico material) {
+    public void registrarMaterial(MaterialBibliografico material) throws RegistroDuplicadoException, BibliotecaException {
         if (material == null) {
-            System.out.println("El material a registrar no puede ser nulo.");
-            return;
+            throw new BibliotecaException("El material a registrar no puede ser nulo.");
         }
         if (material.getEjemplaresDisponibles() <= 0) {
-            System.out.println("El material debe registrarse con al menos 1 ejemplar disponible.");
-            return;
+            throw new BibliotecaException("El material debe registrarse con al menos 1 ejemplar disponible.");
         }
         for (MaterialBibliografico materialBibliografico : catalogo) {
             if (materialBibliografico.getIdMaterial().equalsIgnoreCase(material.getIdMaterial())) {
-                System.out.println("Registro duplicado. Material Bibliográfico " + material.getIdMaterial());
-                return;
+                throw new RegistroDuplicadoException("Material Bibliográfico", material.getIdMaterial());
             }
         }
         catalogo.add(material);
@@ -67,15 +74,15 @@ public class Biblioteca {
      *
      * @param idMaterial Código del material.
      * @return El objeto MaterialBibliografico localizado.
+     * @throws EntidadNoEncontradaException Si no existe ningún material con ese ID.
      */
-    public MaterialBibliografico buscarMaterialPorId(String idMaterial) {
+    public MaterialBibliografico buscarMaterialPorId(String idMaterial) throws EntidadNoEncontradaException {
         for (MaterialBibliografico materialBibliografico : catalogo) {
             if (materialBibliografico.getIdMaterial().equalsIgnoreCase(idMaterial)) {
                 return materialBibliografico;
             }
         }
-        System.out.println("Material no encontrado " + idMaterial);
-        return null;
+        throw new EntidadNoEncontradaException("Material Bibliográfico", idMaterial);
     }
 
     /**
@@ -114,16 +121,18 @@ public class Biblioteca {
     /**
      * RF-03 (Actualización): Modifica título, autor y existencias disponibles de un material.
      *
-     * @param idMaterial       ID del material a actualizar.
-     * @param nuevoTitulo      Nuevo título.
-     * @param nuevoAutor       Nuevo autor.
+     * @param idMaterial ID del material a actualizar.
+     * @param nuevoTitulo Nuevo título.
+     * @param nuevoAutor Nuevo autor.
      * @param nuevosEjemplares Nueva cantidad de ejemplares disponibles.
+     * @throws EntidadNoEncontradaException Si el material no existe.
+     * @throws BibliotecaException Si la cantidad de ejemplares es negativa.
      */
-    public void actualizarMaterial(String idMaterial, String nuevoTitulo, String nuevoAutor, int nuevosEjemplares) {
+    public void actualizarMaterial(String idMaterial, String nuevoTitulo, String nuevoAutor, int nuevosEjemplares)
+            throws EntidadNoEncontradaException, BibliotecaException {
         MaterialBibliografico material = buscarMaterialPorId(idMaterial);
         if (nuevosEjemplares < 0) {
-            System.out.println("La cantidad de ejemplares disponibles no puede ser negativa.");
-            return;
+            throw new BibliotecaException("La cantidad de ejemplares disponibles no puede ser negativa.");
         }
         if (nuevoTitulo != null && !nuevoTitulo.trim().isEmpty()) {
             material.setTitulo(nuevoTitulo.trim());
@@ -139,12 +148,13 @@ public class Biblioteca {
      * que ningún ejemplar se encuentre actualmente en un préstamo sin devolver (RF-06).
      *
      * @param idMaterial ID del material a dar de baja.
+     * @throws EntidadNoEncontradaException Si el material no existe.
+     * @throws OperacionInvalidaBajaException Si el material tiene préstamos activos pendientes.
      */
-    public void darDeBajaMaterial(String idMaterial) {
+    public void darDeBajaMaterial(String idMaterial) throws EntidadNoEncontradaException, OperacionInvalidaBajaException {
         MaterialBibliografico material = buscarMaterialPorId(idMaterial);
         if (!material.isActivo()) {
-            System.out.printf("El material '%s' ya se encuentra inactivo.\n", idMaterial);
-            return;
+            throw new OperacionInvalidaBajaException(String.format("El material '%s' ya se encuentra inactivo.", idMaterial));
         }
 
         // Valida RN-06: sin ejemplares prestados actualmente
@@ -152,9 +162,9 @@ public class Biblioteca {
             if (!prestamo.isDevuelto()) {
                 for (DetallePrestamo d : prestamo.getDetalles()) {
                     if (d.getMaterial().getIdMaterial().equalsIgnoreCase(idMaterial)) {
-                        System.out.printf("No se puede dar de baja el material '%s' porque tiene ejemplares en el préstamo activo '%s'.\n",
-                                idMaterial, prestamo.getFolio());
-                        return;
+                        throw new OperacionInvalidaBajaException(
+                                String.format("No se puede dar de baja el material '%s' porque tiene ejemplares en el préstamo activo '%s' (RN-06).",
+                                        idMaterial, prestamo.getFolio()));
                     }
                 }
             }
@@ -168,16 +178,16 @@ public class Biblioteca {
      * RF-05 (Alta): Registra un nuevo usuario (Estudiante, Docente o Bibliotecario).
      *
      * @param usuario Instancia concreta de Usuario.
+     * @throws RegistroDuplicadoException Si el ID de usuario ya está registrado.
+     * @throws BibliotecaException Si el usuario es nulo.
      */
-    public void registrarUsuario(Usuario usuario) {
+    public void registrarUsuario(Usuario usuario) throws RegistroDuplicadoException, BibliotecaException {
         if (usuario == null) {
-            System.out.println("El usuario a registrar no puede ser nulo.");
-            return;
+            throw new BibliotecaException("El usuario a registrar no puede ser nulo.");
         }
         for (Usuario u : usuarios) {
             if (u.getIdUsuario().equalsIgnoreCase(usuario.getIdUsuario())) {
-                System.out.println("Usuario duplicado. Usuario " + usuario.getIdUsuario());
-                return;
+                throw new RegistroDuplicadoException("Usuario", usuario.getIdUsuario());
             }
         }
         usuarios.add(usuario);
@@ -188,15 +198,15 @@ public class Biblioteca {
      *
      * @param idUsuario Identificador del usuario.
      * @return El objeto Usuario correspondiente.
+     * @throws EntidadNoEncontradaException Si no existe un usuario con ese ID.
      */
-    public Usuario buscarUsuarioPorId(String idUsuario) {
+    public Usuario buscarUsuarioPorId(String idUsuario) throws EntidadNoEncontradaException {
         for (Usuario usuario : usuarios) {
             if (usuario.getIdUsuario().equalsIgnoreCase(idUsuario)) {
                 return usuario;
             }
         }
-        System.out.println("Usuario no encontrado. Usuario " + idUsuario);
-        return null;
+        throw new EntidadNoEncontradaException("Usuario", idUsuario);
     }
 
     /**
@@ -219,12 +229,14 @@ public class Biblioteca {
      *
      * @param idUsuario   Identificador del usuario.
      * @param nuevoCorreo Nuevo correo electrónico.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws BibliotecaException Si el correo es vacío.
      */
-    public void actualizarCorreoUsuario(String idUsuario, String nuevoCorreo) {
+    public void actualizarCorreoUsuario(String idUsuario, String nuevoCorreo)
+            throws EntidadNoEncontradaException, BibliotecaException {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
         if (nuevoCorreo == null || nuevoCorreo.trim().isEmpty()) {
-            System.out.println("El correo electrónico no puede estar vacío.");
-            return;
+            throw new BibliotecaException("El correo electrónico no puede estar vacío.");
         }
         usuario.setCorreo(nuevoCorreo.trim());
     }
@@ -233,17 +245,17 @@ public class Biblioteca {
      * RF-06 (Actualización): Liquida el saldo total de multas de un lector.
      *
      * @param idLector Identificador del lector.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws BibliotecaException Si el usuario no es un Lector o no tiene adeudos.
      */
-    public void liquidarMultaLector(String idLector) {
+    public void liquidarMultaLector(String idLector) throws EntidadNoEncontradaException, BibliotecaException {
         Usuario usuario = buscarUsuarioPorId(idLector);
         if (!(usuario instanceof Lector)) {
-            System.out.println("El usuario indicado no corresponde a un perfil de Lector.");
-            return;
+            throw new BibliotecaException("El usuario indicado no corresponde a un perfil de Lector.");
         }
         Lector lector = (Lector) usuario;
         if (!lector.tieneAdeudos()) {
-            System.out.println("El lector no tiene multas pendientes por liquidar.");
-            return;
+            throw new BibliotecaException("El lector no tiene multas pendientes por liquidar.");
         }
         lector.liquidarAdeudo();
     }
@@ -253,24 +265,26 @@ public class Biblioteca {
      * préstamos activos ni multas sin pagar (RN-06).
      *
      * @param idUsuario Identificador del usuario.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws OperacionInvalidaBajaException Si tiene préstamos vigentes o adeudos pendientes.
      */
-    public void darDeBajaUsuario(String idUsuario) {
+    public void darDeBajaUsuario(String idUsuario) throws EntidadNoEncontradaException, OperacionInvalidaBajaException {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
         if (!usuario.isActivo()) {
-            System.out.printf("El usuario '%s' ya se encuentra inactivo.\n", idUsuario);
-            return;
+            throw new OperacionInvalidaBajaException(String.format("El usuario '%s' ya se encuentra inactivo.", idUsuario));
         }
 
         if (usuario instanceof Lector) {
             Lector lector = (Lector) usuario;
             if (lector.tieneAdeudos()) {
-                System.out.printf("No se puede dar de baja al lector '%s' porque mantiene un adeudo de $%.2f MXN.\n",
-                        idUsuario, lector.getAdeudoMultas());
-                return;
+                throw new OperacionInvalidaBajaException(
+                        String.format("No se puede dar de baja al lector '%s' porque mantiene un adeudo de $%.2f MXN (RN-06).",
+                                idUsuario, lector.getAdeudoMultas()));
             }
             if (contarEjemplaresPrestadosALector(idUsuario) > 0) {
-                System.out.printf("No se puede dar de baja al lector '%s' porque tiene préstamos activos sin devolver.\n", idUsuario);
-                return;
+                throw new OperacionInvalidaBajaException(
+                        String.format("No se puede dar de baja al lector '%s' porque tiene préstamos activos sin devolver (RN-06).",
+                                idUsuario));
             }
         }
         usuario.desactivar();
@@ -283,47 +297,47 @@ public class Biblioteca {
      * su límite polimórfico de préstamos simultáneos (RN-02) y descuenta el inventario.
      *
      * @param prestamo Objeto Prestamo previamente armado con sus detalles.
+     * @throws RegistroDuplicadoException Si el folio ya existe.
+     * @throws UsuarioNoElegibleException Si el lector está inactivo, tiene multas, vencidos o excede su límite.
+     * @throws BibliotecaException Si el préstamo no tiene detalles o si el bibliotecario está inactivo.
      */
-    public void registrarPrestamo(Prestamo prestamo) {
+    public void registrarPrestamo(Prestamo prestamo)
+            throws RegistroDuplicadoException, UsuarioNoElegibleException, BibliotecaException {
         if (prestamo == null) {
-            System.out.println("El préstamo no puede ser nulo.");
-            return;
+            throw new BibliotecaException("El préstamo no puede ser nulo.");
         }
         if (prestamo.getDetalles().isEmpty()) {
-            System.out.println("El préstamo debe contener al menos un material en su detalle.");
-            return;
+            throw new BibliotecaException("El préstamo debe contener al menos un material en su detalle.");
         }
         for (Prestamo p : prestamos) {
             if (p.getFolio().equalsIgnoreCase(prestamo.getFolio())) {
-                System.out.println("Préstamo duplicado. Préstamo " + prestamo.getFolio());
-                return;
+                throw new RegistroDuplicadoException("Préstamo", prestamo.getFolio());
             }
         }
         if (!prestamo.getBibliotecario().isActivo()) {
-            System.out.println("El bibliotecario que autoriza debe tener su cuenta activa.");
-            return;
+            throw new BibliotecaException("El bibliotecario que autoriza debe tener su cuenta activa.");
         }
 
         Lector lector = prestamo.getLector();
 
         // Valida RN-04: cuenta activa y sin adeudos
         if (!lector.isActivo()) {
-            System.out.printf("La cuenta del lector '%s' está inactiva y no puede solicitar préstamos.\n", lector.getNombre());
-            return;
+            throw new UsuarioNoElegibleException(
+                    String.format("La cuenta del lector '%s' está inactiva y no puede solicitar préstamos (RN-04).",
+                            lector.getNombre()));
         }
         if (lector.tieneAdeudos()) {
-            System.out.printf("El lector '%s' tiene un adeudo pendiente de $%.2f MXN. Debe liquidarlo antes de solicitar otro préstamo.\n",
-                    lector.getNombre(), lector.getAdeudoMultas());
-            return;
+            throw new UsuarioNoElegibleException(
+                    String.format("El lector '%s' tiene un adeudo pendiente de $%.2f MXN. Debe liquidarlo antes de solicitar otro préstamo (RN-04).",
+                            lector.getNombre(), lector.getAdeudoMultas()));
         }
 
         // Valida RN-04: sin préstamos vencidos actualmente
         for (Prestamo p : prestamos) {
-            if (p.getLector().getIdUsuario().equalsIgnoreCase(lector.getIdUsuario())
-                    && p.estaVencido(prestamo.getFechaPrestamo())) {
-                System.out.printf("El lector '%s' tiene el préstamo vencido '%s'. Debe devolverlo primero.\n",
-                        lector.getNombre(), p.getFolio());
-                return;
+            if (p.getLector().getIdUsuario().equalsIgnoreCase(lector.getIdUsuario()) && p.estaVencido(prestamo.getFechaPrestamo())) {
+                throw new UsuarioNoElegibleException(
+                        String.format("El lector '%s' tiene el préstamo vencido '%s'. Debe devolverlo primero (RN-04).",
+                                lector.getNombre(), p.getFolio()));
             }
         }
 
@@ -333,9 +347,9 @@ public class Biblioteca {
         int limite = lector.getLimitePrestamos();
 
         if (actuales + nuevos > limite) {
-            System.out.printf("'%s' excede su límite de %d materiales simultáneos (actuales: %d, solicitados: %d)\n",
-                    lector.getNombre(), limite, actuales, nuevos);
-            return;
+            throw new UsuarioNoElegibleException(
+                    String.format("'%s' excede su límite de %d materiales simultáneos (Actuales: %d, Solicitados: %d) (RN-02).",
+                            lector.getNombre(), limite, actuales, nuevos));
         }
 
         // Descuenta ejemplares del inventario disponible y guarda el préstamo
@@ -353,8 +367,11 @@ public class Biblioteca {
      * @param folio Folio del préstamo a devolver.
      * @param fechaEntrega Fecha real en que se entregan los materiales.
      * @return Monto de multa generada (0.0 si no hubo retraso).
+     * @throws EntidadNoEncontradaException Si el folio no existe.
+     * @throws BibliotecaException Si el préstamo ya fue devuelto.
      */
-    public double procesarDevolucion(String folio, LocalDate fechaEntrega) {
+    public double procesarDevolucion(String folio, LocalDate fechaEntrega)
+            throws EntidadNoEncontradaException, BibliotecaException {
         Prestamo prestamo = buscarPrestamoPorFolio(folio);
         return prestamo.registrarDevolucion(fechaEntrega);
     }
@@ -364,15 +381,15 @@ public class Biblioteca {
      *
      * @param folio Folio del préstamo.
      * @return El objeto Prestamo encontrado.
+     * @throws EntidadNoEncontradaException Si no existe un préstamo con ese folio.
      */
-    public Prestamo buscarPrestamoPorFolio(String folio) {
+    public Prestamo buscarPrestamoPorFolio(String folio) throws EntidadNoEncontradaException {
         for (Prestamo prestamo : prestamos) {
             if (prestamo.getFolio().equalsIgnoreCase(folio)) {
                 return prestamo;
             }
         }
-        System.out.println("Préstamo no encontrado. Préstamo " + folio);
-        return null;
+        throw new EntidadNoEncontradaException("Préstamo", folio);
     }
 
     /**

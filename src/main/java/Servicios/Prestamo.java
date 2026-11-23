@@ -1,5 +1,8 @@
 package Servicios;
 
+import Excepciones.BibliotecaException;
+import Excepciones.MaterialNoDisponibleException;
+
 import Usuarios.Bibliotecario;
 import Usuarios.Lector;
 
@@ -67,36 +70,37 @@ public class Prestamo {
      *
      * @param material Material bibliográfico a prestar.
      * @param cantidad Número de ejemplares solicitados.
+     * @throws MaterialNoDisponibleException Si el material está inactivo (es solo de consulta en sala o sin stock).
+     * @throws BibliotecaException Si la cantidad no es válida o supera el máximo permitido por folio.
      */
-    public void agregarDetalle(MaterialBibliografico material, int cantidad) {
+    public void agregarDetalle(MaterialBibliografico material, int cantidad)
+            throws MaterialNoDisponibleException, BibliotecaException{
         if (material == null) {
-            System.out.println("El material bibliográfico no puede ser nulo.");
-            return;
+            throw new BibliotecaException("El material bibliográfico no puede ser nulo.");
         }
         if (cantidad <= 0) {
-            System.out.println("La cantidad de ejemplares a prestar debe ser mayor a cero.");
-            return;
+            throw new BibliotecaException("La cantidad de ejemplares a prestar debe ser mayor a cero.");
         }
         if (!material.isActivo()) {
-            System.out.printf("El material '%s' (%s) se encuentra dado de baja lógica.\n",
-                    material.getTitulo(), material.getIdMaterial());
-            return;
+            throw new MaterialNoDisponibleException(
+                    String.format("El material '%s' (%s) se encuentra dado de baja lógica.",
+                            material.getTitulo(), material.getIdMaterial()));
         }
 
         // POLIMORFISMO: Verifica si el tipo de material permite préstamo externo (LibroConsulta retorna false).
         if (!material.esPrestableExterno()) {
-            System.out.printf("El material '%s' (%s) es exclusivo de consulta en sala y no puede salir a domicilio.\n",
-                    material.getTitulo(), material.getIdMaterial());
-            return;
+            throw new MaterialNoDisponibleException(
+                    String.format("El material '%s' (%s) es exclusivo de consulta en sala y no puede salir a domicilio (RN-01).",
+                            material.getTitulo(), material.getIdMaterial()));
         }
         if (material.getEjemplaresDisponibles() < cantidad) {
-            System.out.printf("Stock insuficiente para '%s'. Disponibles: %d, Solicitados: %d.\n",
-                    material.getTitulo(), material.getEjemplaresDisponibles(), cantidad);
-            return;
+            throw new MaterialNoDisponibleException(
+                    String.format("Stock insuficiente para '%s'. Disponibles: %d, Solicitados: %d.",
+                            material.getTitulo(), material.getEjemplaresDisponibles(), cantidad));
         }
         if (obtenerTotalEjemplares() + cantidad > MAX_ITEMS_POR_FOLIO) {
-            System.out.printf("Un mismo folio de préstamo no puede exceder %d ejemplares en total.\n", MAX_ITEMS_POR_FOLIO);
-            return;
+            throw new BibliotecaException(
+                    String.format("Un mismo folio de préstamo no puede exceder %d ejemplares en total.", MAX_ITEMS_POR_FOLIO));
         }
 
         // COMPOSICIÓN: Instancia el DetallePrestamo dentro del ciclo de vida del Prestamo.
@@ -148,11 +152,12 @@ public class Prestamo {
      *
      * @param fechaEntrega Fecha en que el lector entrega los materiales.
      * @return Monto total de la multa generada (0.0 si se entregó a tiempo).
+     * @throws BibliotecaException Si el préstamo ya había sido devuelto.
      */
-    public double registrarDevolucion(LocalDate fechaEntrega) {
+    public double registrarDevolucion(LocalDate fechaEntrega) throws BibliotecaException {
         if (this.devuelto) {
-            System.out.printf("El préstamo con folio '%s' ya fue devuelto anteriormente.\n", this.folio);
-            return 0.0;
+            throw new BibliotecaException(
+                    String.format("El préstamo con folio '%s' ya fue devuelto anteriormente.", this.folio));
         }
         if (fechaEntrega == null) {
             fechaEntrega = LocalDate.now();
