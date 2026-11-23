@@ -1,5 +1,7 @@
 package Materiales;
 
+import Excepciones.BibliotecaException;
+
 /**
  * Especialización de libro destinada exclusivamente a consulta interna dentro de las salas de lectura.
  */
@@ -24,9 +26,9 @@ public class LibroConsulta extends Libro {
      */
     public LibroConsulta(String idMaterial, String titulo, String autor, int anioPublicacion,
                          int ejemplaresDisponibles, String isbn, int numeroPaginas,
-                         AreaReferencia areaReferencia, String ubicacionSala) {
+                         AreaReferencia areaReferencia, String ubicacionSala) throws BibliotecaException {
         super(idMaterial, titulo, autor, anioPublicacion, ejemplaresDisponibles, isbn, numeroPaginas);
-        this.areaReferencia = areaReferencia;
+        setAreaReferencia(areaReferencia);
         this.ubicacionSala = ubicacionSala;
     }
 
@@ -57,7 +59,10 @@ public class LibroConsulta extends Libro {
         return areaReferencia;
     }
 
-    public void setAreaReferencia(AreaReferencia areaReferencia) {
+    public void setAreaReferencia(AreaReferencia areaReferencia) throws BibliotecaException {
+        if (areaReferencia == null) {
+            throw new BibliotecaException("El área de referencia no puede ser nula.");
+        }
         this.areaReferencia = areaReferencia;
     }
 
