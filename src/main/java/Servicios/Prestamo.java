@@ -70,6 +70,8 @@ public class Prestamo {
      *
      * @param material Material bibliográfico a prestar.
      * @param cantidad Número de ejemplares solicitados.
+     * @throws MaterialNoDisponibleException Si el material está inactivo (es solo de consulta en sala o sin stock).
+     * @throws BibliotecaException Si la cantidad no es válida o supera el máximo permitido por folio.
      */
     public void agregarDetalle(MaterialBibliografico material, int cantidad)
             throws MaterialNoDisponibleException, BibliotecaException{
@@ -150,6 +152,7 @@ public class Prestamo {
      *
      * @param fechaEntrega Fecha en que el lector entrega los materiales.
      * @return Monto total de la multa generada (0.0 si se entregó a tiempo).
+     * @throws BibliotecaException Si el préstamo ya había sido devuelto.
      */
     public double registrarDevolucion(LocalDate fechaEntrega) throws BibliotecaException {
         if (this.devuelto) {

@@ -51,6 +51,8 @@ public class Biblioteca {
      * RF-01 (Alta): Registra un nuevo material en el catálogo verificando que su ID no exista.
      *
      * @param material Subclase concreta de MaterialBibliografico.
+     * @throws RegistroDuplicadoException Si ya existe un material con el mismo ID.
+     * @throws BibliotecaException Si el material es nulo o sus ejemplares no son válidos.
      */
     public void registrarMaterial(MaterialBibliografico material) throws RegistroDuplicadoException, BibliotecaException {
         if (material == null) {
@@ -72,6 +74,7 @@ public class Biblioteca {
      *
      * @param idMaterial Código del material.
      * @return El objeto MaterialBibliografico localizado.
+     * @throws EntidadNoEncontradaException Si no existe ningún material con ese ID.
      */
     public MaterialBibliografico buscarMaterialPorId(String idMaterial) throws EntidadNoEncontradaException {
         for (MaterialBibliografico materialBibliografico : catalogo) {
@@ -118,10 +121,12 @@ public class Biblioteca {
     /**
      * RF-03 (Actualización): Modifica título, autor y existencias disponibles de un material.
      *
-     * @param idMaterial       ID del material a actualizar.
-     * @param nuevoTitulo      Nuevo título.
-     * @param nuevoAutor       Nuevo autor.
+     * @param idMaterial ID del material a actualizar.
+     * @param nuevoTitulo Nuevo título.
+     * @param nuevoAutor Nuevo autor.
      * @param nuevosEjemplares Nueva cantidad de ejemplares disponibles.
+     * @throws EntidadNoEncontradaException Si el material no existe.
+     * @throws BibliotecaException Si la cantidad de ejemplares es negativa.
      */
     public void actualizarMaterial(String idMaterial, String nuevoTitulo, String nuevoAutor, int nuevosEjemplares)
             throws EntidadNoEncontradaException, BibliotecaException {
@@ -143,6 +148,8 @@ public class Biblioteca {
      * que ningún ejemplar se encuentre actualmente en un préstamo sin devolver (RF-06).
      *
      * @param idMaterial ID del material a dar de baja.
+     * @throws EntidadNoEncontradaException Si el material no existe.
+     * @throws OperacionInvalidaBajaException Si el material tiene préstamos activos pendientes.
      */
     public void darDeBajaMaterial(String idMaterial) throws EntidadNoEncontradaException, OperacionInvalidaBajaException {
         MaterialBibliografico material = buscarMaterialPorId(idMaterial);
@@ -171,6 +178,8 @@ public class Biblioteca {
      * RF-05 (Alta): Registra un nuevo usuario (Estudiante, Docente o Bibliotecario).
      *
      * @param usuario Instancia concreta de Usuario.
+     * @throws RegistroDuplicadoException Si el ID de usuario ya está registrado.
+     * @throws BibliotecaException Si el usuario es nulo.
      */
     public void registrarUsuario(Usuario usuario) throws RegistroDuplicadoException, BibliotecaException {
         if (usuario == null) {
@@ -189,6 +198,7 @@ public class Biblioteca {
      *
      * @param idUsuario Identificador del usuario.
      * @return El objeto Usuario correspondiente.
+     * @throws EntidadNoEncontradaException Si no existe un usuario con ese ID.
      */
     public Usuario buscarUsuarioPorId(String idUsuario) throws EntidadNoEncontradaException {
         for (Usuario usuario : usuarios) {
@@ -219,6 +229,8 @@ public class Biblioteca {
      *
      * @param idUsuario   Identificador del usuario.
      * @param nuevoCorreo Nuevo correo electrónico.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws BibliotecaException Si el correo es vacío.
      */
     public void actualizarCorreoUsuario(String idUsuario, String nuevoCorreo)
             throws EntidadNoEncontradaException, BibliotecaException {
@@ -233,6 +245,8 @@ public class Biblioteca {
      * RF-06 (Actualización): Liquida el saldo total de multas de un lector.
      *
      * @param idLector Identificador del lector.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws BibliotecaException Si el usuario no es un Lector o no tiene adeudos.
      */
     public void liquidarMultaLector(String idLector) throws EntidadNoEncontradaException, BibliotecaException {
         Usuario usuario = buscarUsuarioPorId(idLector);
@@ -251,6 +265,8 @@ public class Biblioteca {
      * préstamos activos ni multas sin pagar (RN-06).
      *
      * @param idUsuario Identificador del usuario.
+     * @throws EntidadNoEncontradaException Si el usuario no existe.
+     * @throws OperacionInvalidaBajaException Si tiene préstamos vigentes o adeudos pendientes.
      */
     public void darDeBajaUsuario(String idUsuario) throws EntidadNoEncontradaException, OperacionInvalidaBajaException {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
@@ -281,6 +297,9 @@ public class Biblioteca {
      * su límite polimórfico de préstamos simultáneos (RN-02) y descuenta el inventario.
      *
      * @param prestamo Objeto Prestamo previamente armado con sus detalles.
+     * @throws RegistroDuplicadoException Si el folio ya existe.
+     * @throws UsuarioNoElegibleException Si el lector está inactivo, tiene multas, vencidos o excede su límite.
+     * @throws BibliotecaException Si el préstamo no tiene detalles o si el bibliotecario está inactivo.
      */
     public void registrarPrestamo(Prestamo prestamo)
             throws RegistroDuplicadoException, UsuarioNoElegibleException, BibliotecaException {
@@ -348,6 +367,8 @@ public class Biblioteca {
      * @param folio Folio del préstamo a devolver.
      * @param fechaEntrega Fecha real en que se entregan los materiales.
      * @return Monto de multa generada (0.0 si no hubo retraso).
+     * @throws EntidadNoEncontradaException Si el folio no existe.
+     * @throws BibliotecaException Si el préstamo ya fue devuelto.
      */
     public double procesarDevolucion(String folio, LocalDate fechaEntrega)
             throws EntidadNoEncontradaException, BibliotecaException {
@@ -360,6 +381,7 @@ public class Biblioteca {
      *
      * @param folio Folio del préstamo.
      * @return El objeto Prestamo encontrado.
+     * @throws EntidadNoEncontradaException Si no existe un préstamo con ese folio.
      */
     public Prestamo buscarPrestamoPorFolio(String folio) throws EntidadNoEncontradaException {
         for (Prestamo prestamo : prestamos) {
