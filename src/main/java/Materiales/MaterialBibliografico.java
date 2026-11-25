@@ -1,5 +1,8 @@
 package Materiales;
 
+import Excepciones.BibliotecaException;
+import Excepciones.MaterialNoDisponibleException;
+
 /**
  * Clase abstracta base que concentra los atributos y operaciones comunes
  * del acervo documental de la biblioteca.
@@ -25,7 +28,8 @@ public abstract class MaterialBibliografico implements Prestable {
      * @param anioPublicacion       Año de publicación.
      * @param ejemplaresDisponibles Cantidad inicial de copias físicas disponibles.
      */
-    public MaterialBibliografico(String idMaterial, String titulo, String autor, int anioPublicacion, int ejemplaresDisponibles) {
+    public MaterialBibliografico(String idMaterial, String titulo, String autor, int anioPublicacion, int ejemplaresDisponibles)
+            throws BibliotecaException {
         this.idMaterial = idMaterial;
         this.titulo = titulo;
         this.autor = autor;
@@ -54,10 +58,12 @@ public abstract class MaterialBibliografico implements Prestable {
     /**
      * Disminuye en una unidad el inventario disponible al concretarse un préstamo.
      */
-    public void reducirStock() {
-        if (this.ejemplaresDisponibles > 0) {
-            this.ejemplaresDisponibles--;
+    public void reducirStock() throws MaterialNoDisponibleException {
+        if (this.ejemplaresDisponibles <= 0) {
+            throw new MaterialNoDisponibleException(
+                    "No hay ejemplares disponibles para reducir stock del material: " + this.idMaterial);
         }
+        this.ejemplaresDisponibles--;
     }
 
     /**
@@ -103,10 +109,11 @@ public abstract class MaterialBibliografico implements Prestable {
         return ejemplaresDisponibles;
     }
 
-    public void setEjemplaresDisponibles(int ejemplaresDisponibles) {
-        if (ejemplaresDisponibles >= 0) {
-            this.ejemplaresDisponibles = ejemplaresDisponibles;
+    public void setEjemplaresDisponibles(int ejemplaresDisponibles) throws BibliotecaException {
+        if (ejemplaresDisponibles < 0) {
+            throw new BibliotecaException("La cantidad de ejemplares disponibles no puede ser negativa.");
         }
+        this.ejemplaresDisponibles = ejemplaresDisponibles;
     }
 
     public boolean isActivo() {
